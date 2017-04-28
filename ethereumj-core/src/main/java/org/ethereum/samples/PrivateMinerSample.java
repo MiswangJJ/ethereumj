@@ -35,11 +35,11 @@ public class PrivateMinerSample {
                 "peer.discovery.enabled = false \n" +
                 "peer.listen.port = 30335 \n" +
                  // need to have different nodeId's for the peers
-                "peer.privateKey = 6ef8da380c27cea8fdf7448340ea99e8e2268fc2950d79ed47cbf6f85dc977ec \n" +
+                "peer.privateKey = 2268c2950d79e8eda380c27cd47cbf6f86ef8448340ea99eea8fdf7f5dc977ec \n" +
                 // our private net ID
-                "peer.networkId = 555 \n" +
+                "peer.networkId = 31376419 \n" +
                 // we have no peers to sync with
-                "sync.enabled = false \n" +
+                "sync.enabled = true \n" +
                 // genesis with a lower initial difficulty and some predefined known funded accounts
                 "genesis = sample-genesis.json \n" +
                 // two peers need to have separate database dirs

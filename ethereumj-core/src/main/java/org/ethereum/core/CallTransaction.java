@@ -131,6 +131,7 @@ public class CallTransaction {
                     ret[i] = params[i].type.decode(encoded, IntType.decodeInt(encoded, off).intValue());
                 } else {
                     ret[i] = params[i].type.decode(encoded, off);
+                    System.out.println(params[i].type);
                 }
                 off += params[i].type.getFixedSize();
             }

@@ -86,6 +86,9 @@ public class ByteUtil {
         return data;
     }
 
+
+
+
     public static BigInteger bytesToBigInteger(byte[] bb) {
         return bb.length == 0 ? BigInteger.ZERO : new BigInteger(1, bb);
     }
@@ -390,6 +393,23 @@ public class ByteUtil {
         byte[] src = ByteUtil.bigIntegerToBytes(value);
         byte[] dest = ByteBuffer.allocate(32).array();
         System.arraycopy(src, 0, dest, dest.length - src.length, src.length);
+        return dest;
+    }
+
+
+    /**
+     *
+     * @return
+     */
+    public static byte[] leftPadZeroTo32Bytes(byte[] src){
+        int len = src.length;
+        byte[] dest = new byte[32];
+        for(int i = 0; i < 32; i++){
+            if(len - 32 + i >= 0)
+                dest[i] = src[len - 32 + i];
+            else
+                dest[i] = 0;
+        }
         return dest;
     }
 

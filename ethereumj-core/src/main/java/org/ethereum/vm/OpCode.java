@@ -121,6 +121,11 @@ public enum OpCode {
      */
     SHA3(0x20, 2, 1, SpecialTier),
 
+    /**
+     * (0x21) Compute zk-snark verification
+     */
+    //VERIFY(0x21, 3, 1, MidTier),
+
     /*  Environmental Information   */
 
     /**

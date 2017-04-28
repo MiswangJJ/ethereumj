@@ -27,12 +27,14 @@ public class Solc {
     private void init(SystemProperties config) throws IOException {
         if (config != null && config.customSolcPath() != null) {
             solc = new File(config.customSolcPath());
+            System.out.println(solc.toPath());
             if (!solc.canExecute()) {
                 throw new RuntimeException(String.format(
                         "Solidity compiler from config solc.path: %s is not a valid executable",
                         config.customSolcPath()
                 ));
             }
+            System.out.println(solc.toPath());
         } else {
             initBundled();
         }

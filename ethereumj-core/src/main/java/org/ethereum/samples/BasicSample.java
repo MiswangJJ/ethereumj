@@ -229,6 +229,10 @@ public class BasicSample implements Runnable {
 
             if (syncPeers.size() > 0) {
                 logger.info("[v] At least one sync peer found.");
+                Iterator iter = syncPeers.iterator();
+                while (iter.hasNext() ) {
+                    logger.info(iter.next().toString());
+                }
                 return;
             }
 

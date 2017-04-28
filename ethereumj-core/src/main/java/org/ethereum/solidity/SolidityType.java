@@ -151,11 +151,12 @@ public abstract class SolidityType {
 
         @Override
         public Object[] decode(byte[] encoded, int offset) {
+            System.out.println("StaticArrayType decoding is running: " + offset);
             Object[] result = new Object[size];
             for (int i = 0; i < size; i++) {
                 result[i] = elementType.decode(encoded, offset + i * elementType.getFixedSize());
+                System.out.println(elementType);
             }
-
             return result;
         }
 
@@ -202,6 +203,7 @@ public abstract class SolidityType {
 
         @Override
         public Object decode(byte[] encoded, int origOffset) {
+            System.out.println("DynamicArrayType decoding is running: " + origOffset);
             int len = IntType.decodeInt(encoded, origOffset).intValue();
             origOffset += 32;
             int offset = origOffset;
@@ -296,6 +298,7 @@ public abstract class SolidityType {
 
         @Override
         public Object decode(byte[] encoded, int offset) {
+            //System.out.println("Bytes32Type decoding is running: " + offset);
             return Arrays.copyOfRange(encoded, offset, offset + getFixedSize());
         }
     }
@@ -341,6 +344,7 @@ public abstract class SolidityType {
 
         @Override
         public byte[] encode(Object value) {
+
             BigInteger bigInt;
 
             if (value instanceof String) {
@@ -368,6 +372,7 @@ public abstract class SolidityType {
 
         @Override
         public Object decode(byte[] encoded, int offset) {
+            System.out.println("IntType decode is running");
             return decodeInt(encoded, offset);
         }
 
@@ -395,6 +400,7 @@ public abstract class SolidityType {
 
         @Override
         public Object decode(byte[] encoded, int offset) {
+            System.out.println("BoolType decode is running");
             return Boolean.valueOf(((Number) super.decode(encoded, offset)).intValue() != 0);
         }
     }

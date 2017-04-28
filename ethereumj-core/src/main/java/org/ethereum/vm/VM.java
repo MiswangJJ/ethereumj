@@ -16,13 +16,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.ethereum.util.ByteUtil.*;
 import static org.ethereum.crypto.HashUtil.sha3;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.ethereum.vm.OpCode.CALL;
-import static org.ethereum.vm.OpCode.CALLCODE;
-import static org.ethereum.vm.OpCode.CREATE;
-import static org.ethereum.vm.OpCode.DELEGATECALL;
-import static org.ethereum.vm.OpCode.PUSH1;
+import static org.ethereum.vm.OpCode.*;
 
 /**
  * The Ethereum Virtual Machine (EVM) is responsible for initialization
@@ -228,6 +225,11 @@ public class VM {
                     long chunkUsed = (size.longValueSafe() + 31) / 32;
                     gasCost += chunkUsed * gasCosts.getSHA3_WORD();
                     break;
+                //case VERIFY:
+                //    gasCost += calcMemGas(gasCosts, oldMemSize,
+                //            memNeeded(stack.peek(), stack.get(stack.size() - 3)),
+                //            stack.get(stack.size() - 3).longValueSafe());
+                //    break;
                 case CALLDATACOPY:
                     gasCost += calcMemGas(gasCosts, oldMemSize,
                             memNeeded(stack.peek(), stack.get(stack.size() - 3)),
@@ -655,17 +657,63 @@ public class VM {
                     DataWord lengthData = program.stackPop();
                     byte[] buffer = program.memoryChunk(memOffsetData.intValueSafe(), lengthData.intValueSafe());
 
+                    BigInteger bi = new BigInteger(buffer);
+
+                    System.out.println("SHA3 input length: " + buffer.length);
+                    for (int i = 0; i < buffer.length; i++){
+                        System.out.println( i + " byte: " + buffer[i]);
+                    }
+
+                    System.out.println(bi);
+
+                    //call sha3 method from crypto
                     byte[] encoded = sha3(buffer);
+
                     DataWord word = new DataWord(encoded);
+
 
                     if (logger.isInfoEnabled())
                         hint = word.toString();
+                    //program.stackPush(word);
+                    //program.step();
 
-                    program.stackPush(word);
+                    BigInteger r = new BigInteger("10000");
+                    program.stackPush(new DataWord(copyToArray(r)));
                     program.step();
+
                 }
                 break;
 
+                /**
+                 * VERIFY
+                 */
+                /*case VERIFY: {
+                    DataWord word1 = program.stackPop();
+                    DataWord word2 = program.stackPop();
+                    DataWord word3 = program.stackPop();
+                    BigInteger a = new BigInteger(word1.getData());
+                    BigInteger b = new BigInteger(word2.getData());
+                    BigInteger c = new BigInteger(word3.getData());
+
+                    BigInteger r = a.add(b).add(c);
+
+                    program.stackPush(new DataWord(copyToArray(r)));
+                    program.step();
+                    //DataWord memOffsetData = program.stackPop();
+                    //DataWord lengthData = program.stackPop();
+                    //byte[] buffer = program.memoryChunk(memOffsetData.intValueSafe(), lengthData.intValueSafe());
+
+                    //byte[] encoded = verify(buffer);
+                    //DataWord word = new DataWord(encoded);
+
+                    //if (logger.isInfoEnabled())
+                    //    hint = word.toString();
+
+                    //program.stackPush(word);
+                    program.step();
+                }
+                break;
+*/
                 /**
                  * Environmental Information
                  */

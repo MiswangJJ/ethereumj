@@ -119,6 +119,7 @@ public class GasCost {
         return SHA3;
     }
 
+
     public int getSHA3_WORD() {
         return SHA3_WORD;
     }
