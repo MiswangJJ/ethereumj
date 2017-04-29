@@ -1,8 +1,11 @@
 package org.ethereum.vm;
 
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader;
 import org.ethereum.config.BlockchainConfig;
 import org.ethereum.config.SystemProperties;
+import org.ethereum.crypto.Snarks;
 import org.ethereum.db.ContractDetails;
+import org.ethereum.util.Utils;
 import org.ethereum.vm.MessageCall.MsgType;
 import org.ethereum.vm.program.Program;
 import org.ethereum.vm.program.Stack;
@@ -13,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -59,6 +63,11 @@ import static org.ethereum.vm.OpCode.*;
  * @since 01.06.2014
  */
 public class VM {
+
+    //Test purpose only
+    //Set a fixed zero gas consumption for all contract
+    //Comment line 122 and de-comment line 121 to remove this setting
+    final int FIXED_GAS_COST = 0;
 
     private static final Logger logger = LoggerFactory.getLogger("VM");
     private static final Logger dumpLogger = LoggerFactory.getLogger("dump");
@@ -111,7 +120,8 @@ public class VM {
             long copyGas = gasCosts.getCOPY_GAS() * ((copySize + 31) / 32);
             gasCost += copyGas;
         }
-        return gasCost;
+        //return gasCost;
+        return FIXED_GAS_COST;
     }
 
     private boolean isDeadAccount(Program program, byte[] addr) {
@@ -650,70 +660,49 @@ public class VM {
                 break;
 
                 /**
-                 * SHA3
+                 * Modify SHA3 op code for SNARK verification
+                 * sha3 is still usable unless the beginning
+                 * is attached with string "zkSnark"; otherwise,
+                 * zkSnark will be executed and sha3 is NOT run
                  */
                 case SHA3: {
+
                     DataWord memOffsetData = program.stackPop();
                     DataWord lengthData = program.stackPop();
                     byte[] buffer = program.memoryChunk(memOffsetData.intValueSafe(), lengthData.intValueSafe());
 
-                    BigInteger bi = new BigInteger(buffer);
+                    byte[] arg0 = Arrays.copyOfRange(buffer, 0, 32);
+                    //System.out.println("arg0: " + new BigInteger(arg0));
+                    //Hex.decode("Privacy >= Ethereum += zkSnarks");
+                    final String SNARK_ARG0 = "Privacy == (Ethereum += zkSnark)";
 
-                    System.out.println("SHA3 input length: " + buffer.length);
-                    for (int i = 0; i < buffer.length; i++){
-                        System.out.println( i + " byte: " + buffer[i]);
+                    //If the first 256bit word is NOT for SNARK
+                    //Do the normal sha3 hash function
+                    if ( !new String(arg0).equals(SNARK_ARG0) ) {
+                        //call sha3 method from crypto
+                        byte[] encoded = sha3(buffer);
+                        DataWord word = new DataWord(encoded);
+                        if (logger.isInfoEnabled())
+                            hint = word.toString();
+                        program.stackPush(word);
+                        program.step();
+                    } else { //Otherwise, do snark processes
+                        //TODO: revise solc completely such that VERIFY and SHA3 can be seperated
+                        //System.out.println("SHA3 input length: " + buffer.length);
+                        //for (int i = 0; i < buffer.length; i++) {
+                            //System.out.println(buffer[i]);
+                        //}
+                        //BigInteger bi = new BigInteger(Arrays.copyOfRange(buffer,32,buffer.length));
+                        //System.out.println(bi.toString(16));
+                        BigInteger res =
+                                BigInteger.valueOf(Snarks.verify(Arrays.copyOfRange(buffer,32, buffer.length)));
+                        program.stackPush(new DataWord(copyToArray(res)));
+                        program.step();
                     }
-
-                    System.out.println(bi);
-
-                    //call sha3 method from crypto
-                    byte[] encoded = sha3(buffer);
-
-                    DataWord word = new DataWord(encoded);
-
-
-                    if (logger.isInfoEnabled())
-                        hint = word.toString();
-                    //program.stackPush(word);
-                    //program.step();
-
-                    BigInteger r = new BigInteger("10000");
-                    program.stackPush(new DataWord(copyToArray(r)));
-                    program.step();
-
                 }
                 break;
 
-                /**
-                 * VERIFY
-                 */
-                /*case VERIFY: {
-                    DataWord word1 = program.stackPop();
-                    DataWord word2 = program.stackPop();
-                    DataWord word3 = program.stackPop();
-                    BigInteger a = new BigInteger(word1.getData());
-                    BigInteger b = new BigInteger(word2.getData());
-                    BigInteger c = new BigInteger(word3.getData());
 
-                    BigInteger r = a.add(b).add(c);
-
-                    program.stackPush(new DataWord(copyToArray(r)));
-                    program.step();
-                    //DataWord memOffsetData = program.stackPop();
-                    //DataWord lengthData = program.stackPop();
-                    //byte[] buffer = program.memoryChunk(memOffsetData.intValueSafe(), lengthData.intValueSafe());
-
-                    //byte[] encoded = verify(buffer);
-                    //DataWord word = new DataWord(encoded);
-
-                    //if (logger.isInfoEnabled())
-                    //    hint = word.toString();
-
-                    //program.stackPush(word);
-                    program.step();
-                }
-                break;
-*/
                 /**
                  * Environmental Information
                  */

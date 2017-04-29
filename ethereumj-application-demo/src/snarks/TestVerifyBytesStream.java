@@ -1,3 +1,5 @@
+package snarks;
+
 import com.typesafe.config.ConfigFactory;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Block;
@@ -25,22 +27,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.ethereum.util.ByteUtil.*;
+import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
+import static org.ethereum.util.ByteUtil.bytesToBigInteger;
+import static org.ethereum.util.ByteUtil.merge;
 import static util.Utils.encodeBytesArrayToEtherFormat;
 
 /**
- * Created by prover on 4/27/17.
+ * Created by prover on 4/28/17.
  */
-public class MyHashContractTrioSample {
+public class TestVerifyBytesStream {
+
+
 
 
     /**********************************************************************/
-    /**************************** Dummy Prover ****************************/
+    /*********************** Dummy Regular Peer ***************************/
     /**********************************************************************/
     /**********************************************************************/
     /**********************************************************************/
     /**
-     * Spring configuration class for the dummy Snark prover
+     * Spring configuration class for the regular peer
      */
     private static class RegularPeerConfig {
 
@@ -65,8 +71,8 @@ public class MyHashContractTrioSample {
                         "cache.flush.memory = 1";
 
         @Bean
-        public MyHashContractTrioSample.RegularPeerNode node() {
-            return new MyHashContractTrioSample.RegularPeerNode();
+        public TestVerifyBytesStream.RegularPeerNode node() {
+            return new TestVerifyBytesStream.RegularPeerNode();
         }
         /**
          * Instead of supplying properties via config file for the peer
@@ -86,7 +92,7 @@ public class MyHashContractTrioSample {
     /**
      * Peer bean, which just start a peer upon creation and prints miner events
      */
-    static class RegularPeerNode extends BasicSample  {
+    static class RegularPeerNode extends BasicSample {
 
 
         protected final static String senderPrivateKeyString = "c940ad1df4aafcb7e30139429d1577dee8ef90498eec5403f379a7a223338505";
@@ -99,9 +105,16 @@ public class MyHashContractTrioSample {
         String contract =
                 "pragma solidity ^0.4.0; \n"+
                         "contract HashSample { \n" +
+                        "  bytes32 state = 111111111111111111;" +
+                        "  function set_state(bytes32 _state) {" +
+                        "    state = _state;" +
+                        "  }\n" +
                         "  function cal_sha3(byte[] a) returns (bytes32) {" +
+                        "    if (state == 111111111111111111) {" +
+                        "       return verify(state, a);" +
+                        "    }" +
+                        "    return state;" +
                         //I did modify the sha3 op code so that 10000 returns no matter what the input is
-                        "    return verify(a);" +
                         "  }\n" +
                         "}";
 
@@ -113,24 +126,30 @@ public class MyHashContractTrioSample {
             super("peer" );
         }
 
-        // overriding run() method since we don't need to wait for any discovery,
-        // networking or sync events
+
+
         @Override
         public void run() {
+            //Do NOT override it
             super.run();
         }
 
-
         @Override
-        public void onSyncDone() throws Exception {
-
+        public void waitForSyncPeers() throws Exception {
+            super.waitForSyncPeers();
             ethereum.addListener(new EthereumListenerAdapter() {
                 // when block arrives look for our included transactions
                 @Override
                 public void onBlock(Block block, List<TransactionReceipt> receipts) {
-                    RegularPeerNode.this.onBlock(block, receipts);
+                    TestVerifyBytesStream.RegularPeerNode.this.onBlock(block, receipts);
                 }
             });
+        }
+
+        @Override
+        public void onSyncDone() throws Exception {
+
+            super.onSyncDone();
 
             byte[] senderPrivateKey = Hex.decode("c940ad1df4aafcb7e30139429d1577dee8ef90498eec5403f379a7a223338505");
             byte[] fromAddress = ECKey.fromPrivate(senderPrivateKey).getAddress();
@@ -150,42 +169,51 @@ public class MyHashContractTrioSample {
             if (metadata.bin == null || metadata.bin.isEmpty()) {
                 throw new RuntimeException("Compilation failed, no binary returned:\n" + result.errors);
             }
-
-            logger.info("Sending contract to net and waiting for inclusion");
-            TransactionReceipt receipt = sendTxAndWait(new byte[0], Hex.decode(metadata.bin));
-            logger.info("Contract included!");
-
-            byte[] contractAddress = receipt.getTransaction().getContractAddress();
-            logger.info("Contract created: " + Hex.toHexString(contractAddress));
-            logger.info("Contract code: " + Hex.toHexString(Hex.decode(metadata.bin)));
-            logger.info("Contract ABI: " + metadata.abi.toString());
-            logger.info("Verify contract address: " + ethereum.getRepository().isExist(contractAddress));
-
             CallTransaction.Contract contract = new CallTransaction.Contract(metadata.abi);
 
-            logger.info("Calling the calculate hash 'cal_sha3'");
-            CallTransaction.Function cal_sha3 = contract.getByName("cal_sha3");
+            logger.info("Sending contract to net and waiting for inclusion");
+            TransactionReceipt receipt;
+            byte[] contractAddress;
+            try {
+                receipt = sendTxAndWait(new byte[0], Hex.decode(metadata.bin));
+                contractAddress = receipt.getTransaction().getContractAddress();
+                logger.info("Contract created: " + Hex.toHexString(contractAddress));
+                logger.info("Contract code: " + Hex.toHexString(Hex.decode(metadata.bin)));
+                logger.info("Contract ABI: " + metadata.abi.toString());
+                logger.info("Verify contract address: " + ethereum.getRepository().isExist(contractAddress));
+                logger.info("Contract included!");
+            } catch (RuntimeException e){
+                receipt = null;
+                contractAddress  = null;
+                logger.info("Contract NOT packed!");
+            }
 
-            BigInteger bi = new BigInteger("888888888888888888");
-            byte[] biArr = bi.toByteArray();
 
-            //The encoder does not work for bytes array as internal function input
-            //byte[] functionCallBytesArgs = cal_sha3.encodeArguments(biArr);
-            byte[] functionCallBytesPrefix = cal_sha3.encodeSignature();
-            byte[] functionCallBytes = merge(functionCallBytesPrefix,
-                    encodeBytesArrayToEtherFormat(biArr));
+            if (receipt != null) {
+                logger.info("Calling the calculate hash 'cal_sha3'");
+                CallTransaction.Function cal_sha3 = contract.getByName("cal_sha3");
 
-            logger.info("Send verification request!");
-            TransactionReceipt receipt1 = sendTxAndWait(contractAddress, functionCallBytes);
-            logger.info("Verification received!");
+                BigInteger bi = new BigInteger("888888888888888888");
+                byte[] biArr = bi.toByteArray();
 
-            byte[] ret = receipt1.getExecutionResult();
+                //The encoder does not work for bytes array as internal function input
+                //byte[] functionCallBytesArgs = cal_sha3.encodeArguments(biArr);
+                byte[] functionCallBytesPrefix = cal_sha3.encodeSignature();
+                byte[] functionCallBytes = merge(functionCallBytesPrefix,
+                        encodeBytesArrayToEtherFormat(biArr));
 
-            System.out.println(bytesToBigInteger(ret).toString());
+                logger.info("Send verification request!");
+                TransactionReceipt receipt1 = sendTxAndWait(contractAddress, functionCallBytes);
+                logger.info("Verification received!");
+
+                byte[] ret = receipt1.getExecutionResult();
+
+                System.out.println(bytesToBigInteger(ret).toString());
+            }
 
         }
 
-        protected TransactionReceipt sendTxAndWait(byte[] receiveAddress, byte[] data) throws InterruptedException {
+        protected TransactionReceipt sendTxAndWait(byte[] receiveAddress, byte[] data) throws RuntimeException,InterruptedException {
             BigInteger nonce = ethereum.getRepository().getNonce(senderAddress);
             logger.info("<=== Sending data: " + Hex.toHexString(data));
             Transaction tx = new Transaction(
@@ -218,7 +246,7 @@ public class MyHashContractTrioSample {
             }
         }
 
-        private TransactionReceipt waitForTx(byte[] txHash) throws InterruptedException {
+        private TransactionReceipt waitForTx(byte[] txHash) throws RuntimeException, InterruptedException {
             ByteArrayWrapper txHashW = new ByteArrayWrapper(txHash);
             txWaiters.put(txHashW, null);
             long startBlock = ethereum.getBlockchain().getBestBlock().getNumber();
@@ -231,6 +259,7 @@ public class MyHashContractTrioSample {
                 } else {
                     long curBlock = ethereum.getBlockchain().getBestBlock().getNumber();
                     if (curBlock > startBlock + 16) {
+                        txWaiters.remove(txHashW);
                         throw new RuntimeException("The transaction was NOT included in last 16 blocks: " + txHashW.toString().substring(0,8));
                     } else {
                         logger.info("Waiting for block with transaction 0x" + txHashW.toString().substring(0,8) +
@@ -246,6 +275,15 @@ public class MyHashContractTrioSample {
     }
 
 
+
+
+
+
+    /*********************************************************************/
+    /**************** A semaphore for two dummy miners *******************/
+    /**************** otherwise, a danger of dead lock *******************/
+    /*********************************************************************/
+    private static int flag = 0;
 
 
 
@@ -281,14 +319,14 @@ public class MyHashContractTrioSample {
                         // two peers need to have separate database dirs
                         "database.dir = miner-1 \n" +
                         // when more than 1 miner exist on the network extraData helps to identify the block creator
-                        //"mine.extraDataHex = bbbbbbbbbbbbbbbbbbbb \n" +
+                        "mine.extraDataHex = bbbbbbbbbbbbbbbbbbbb \n" +
                         "mine.coinbase = 19e7e376e7c213b7e7e7e46cc70a5dd086daff2a \n" +
                         "mine.cpuMineThreads = 1 \n" +
                         "cache.flush.blocks = 0";
 
         @Bean
-        public MyHashContractTrioSample.MinerNode1 node() {
-            return new MyHashContractTrioSample.MinerNode1();
+        public TestVerifyBytesStream.MinerNode1 node() {
+            return new TestVerifyBytesStream.MinerNode1();
         }
         /**
          * Instead of supplying properties via config file for the peer
@@ -337,7 +375,7 @@ public class MyHashContractTrioSample {
                 // when block arrives look for our included transactions
                 @Override
                 public void onBlock(Block block, List<TransactionReceipt> receipts) {
-                    MinerNode1.this.onBlock(block, receipts);
+                    TestVerifyBytesStream.MinerNode1.this.onBlock(block, receipts);
                 }
             });
             ethereum.getBlockMiner().setFullMining(true);
@@ -360,36 +398,47 @@ public class MyHashContractTrioSample {
         }
 
         @Override
-        public void blockMined(Block block) {
-            //logger.info("Miner " + number + " mined Block : \n" + block);
+        public void blockMined(Block block){
 
-            byte[] senderPrivateKey = Hex.decode("1111111111111111111111111111111111111111111111111111111111111111");
-            byte[] fromAddress = ECKey.fromPrivate(senderPrivateKey).getAddress();
-            byte[] toAddress = Hex.decode("2eb9e62aecfe1bf8b5115151903e0daa871e3ce0");
-            //logger.info("Miner " + number + " Balance : " + ethereum.getRepository().getBalance(fromAddress));
-            BigInteger nonce = ethereum.getRepository().getNonce(fromAddress);
-            BigInteger balance = ethereum.getRepository().getBalance(fromAddress);
-            byte[] data = new byte[0];
-            if (balance.compareTo(new BigInteger("2000000000000000000")) == 1 && txWaiters.isEmpty()) {
-                Transaction tx = new Transaction(
-                        ByteUtil.bigIntegerToBytes(nonce),
-                        ByteUtil.longToBytesNoLeadZeroes(ethereum.getGasPrice()),
-                        ByteUtil.longToBytesNoLeadZeroes(1_000_000),
-                        toAddress,
-                        ByteUtil.bigIntegerToBytes(BigInteger.valueOf(1_000_000_000_000_000_000L)), //1_000_000_000 gwei, 1_000_000_000_000L szabo, 1_000_000_000_000_000L finney, 1_000_000_000_000_000_000L ether
-                        data,
-                        ethereum.getChainIdForNextBlock());
-                tx.sign(ECKey.fromPrivate(senderPrivateKey));
-                //logger.info("<=== Sending transaction: " + tx);
-                ethereum.submitTransaction(tx);
-                //logger.info("<=== Check transactions: " + ethereum.getWireTransactions().size());
+            //logger.info("Miner " + number + " mined Block : \n" + block.getShortDescr());
+
+            if( flag == 0 ) {
+                flag = 1;
+                byte[] senderPrivateKey = Hex.decode("1111111111111111111111111111111111111111111111111111111111111111");
+                byte[] fromAddress = ECKey.fromPrivate(senderPrivateKey).getAddress();
+                byte[] toAddress = Hex.decode("2eb9e62aecfe1bf8b5115151903e0daa871e3ce0");
+                //logger.info("Miner " + number + " Balance : " + ethereum.getRepository().getBalance(fromAddress));
+                BigInteger nonce = ethereum.getRepository().getNonce(fromAddress);
+                BigInteger balance = ethereum.getRepository().getBalance(fromAddress);
+                byte[] data = new byte[0];
+                if (balance.compareTo(new BigInteger("1000000000000000000")) == 1 && txWaiters.isEmpty()) {
+                    Transaction tx = new Transaction(
+                            ByteUtil.bigIntegerToBytes(nonce),
+                            ByteUtil.longToBytesNoLeadZeroes(ethereum.getGasPrice()),
+                            ByteUtil.longToBytesNoLeadZeroes(500_000L),
+                            toAddress,
+                            ByteUtil.bigIntegerToBytes(BigInteger.valueOf(500_000_000_000_000_000L)), //1_000_000_000 gwei, 1_000_000_000_000L szabo, 1_000_000_000_000_000L finney, 1_000_000_000_000_000_000L ether
+                            data,
+                            ethereum.getChainIdForNextBlock());
+                    tx.sign(ECKey.fromPrivate(senderPrivateKey));
+                    //logger.info("<=== Sending transaction: " + tx);
+                    ethereum.submitTransaction(tx);
+                    try {
+                        waitForTx(tx.getHash());
+                        //logger.info("Transaction INCLUDED!");
+                    } catch (Exception e) {
+                        //txWaiters.clear();
+                        //logger.info("Transaction NOT packed.");
+                        //e.printStackTrace();
+                    }
+                }
+            }
+            flag = 0;
+            synchronized (this) {
                 try {
-                    waitForTx(tx.getHash());
-                    //logger.info("Transaction INCLUDED!");
+                    wait(777);
                 } catch (InterruptedException e) {
-                    txWaiters.clear();
-                    //logger.info("Transaction NOT packed.");
-                    //e.printStackTrace();
+                    e.printStackTrace();
                 }
             }
         }
@@ -399,7 +448,7 @@ public class MyHashContractTrioSample {
             //logger.info("Miner " + number + " cancels mining block: " + block.getShortDescr());
         }
 
-        private TransactionReceipt waitForTx(byte[] txHash) throws InterruptedException {
+        private TransactionReceipt waitForTx(byte[] txHash) throws InterruptedException,RuntimeException {
             ByteArrayWrapper txHashW = new ByteArrayWrapper(txHash);
             txWaiters.put(txHashW, null);
             long startBlock = ethereum.getBlockchain().getBestBlock().getNumber();
@@ -412,14 +461,15 @@ public class MyHashContractTrioSample {
                 } else {
                     long curBlock = ethereum.getBlockchain().getBestBlock().getNumber();
                     if (curBlock > startBlock + 16) {
-                        throw new RuntimeException("The transaction was NOT included in last 16 blocks: " + txHashW.toString().substring(0,8));
+                        txWaiters.remove(txHashW);
+                        throw new RuntimeException("Transaction was NOT included last 16 blocks: " + txHashW.toString().substring(0,8));
                     } else {
                         //logger.info("Waiting for block with transaction 0x" + txHashW.toString().substring(0,8) +
                         //        " packed (" + (curBlock - startBlock) + " blocks received so far) ...");
                     }
                 }
                 synchronized (this) {
-                    wait(2000);
+                    wait(555);
                 }
             }
         }
@@ -470,14 +520,14 @@ public class MyHashContractTrioSample {
                         // two peers need to have separate database dirs
                         "database.dir = miner-2 \n" +
                         // when more than 1 miner exist on the network extraData helps to identify the block creator
-                        //"mine.extraDataHex = cccccccccccccccccccc \n" +
+                        "mine.extraDataHex = cccccccccccccccccccc \n" +
                         "mine.cpuMineThreads = 1 \n" +
                         "mine.coinbase = 1563915e194d8cfba1943570603f7606a3115508 \n" +
                         "cache.flush.blocks = 0";
 
         @Bean
-        public MyHashContractTrioSample.MinerNode2 node() {
-            return new MyHashContractTrioSample.MinerNode2();
+        public TestVerifyBytesStream.MinerNode2 node() {
+            return new TestVerifyBytesStream.MinerNode2();
         }
         /**
          * Instead of supplying properties via config file for the peer
@@ -525,7 +575,7 @@ public class MyHashContractTrioSample {
                 // when block arrives look for our included transactions
                 @Override
                 public void onBlock(Block block, List<TransactionReceipt> receipts) {
-                    MinerNode2.this.onBlock(block, receipts);
+                    TestVerifyBytesStream.MinerNode2.this.onBlock(block, receipts);
                 }
             });
             ethereum.getBlockMiner().addListener(this);
@@ -550,35 +600,47 @@ public class MyHashContractTrioSample {
 
         @Override
         public void blockMined(Block block) {
+
             //logger.info("Miner " + number + " mined Block : \n" + block.getShortDescr());
 
-            byte[] senderPrivateKey = Hex.decode("2222222222222222222222222222222222222222222222222222222222222222");
-            byte[] fromAddress = Hex.decode("1563915e194d8cfba1943570603f7606a3115508");
-            byte[] toAddress = Hex.decode("2eb9e62aecfe1bf8b5115151903e0daa871e3ce0");
-            //logger.info("Miner " + number + " Balance : " + ethereum.getRepository().getBalance(fromAddress));
-            BigInteger nonce = ethereum.getRepository().getNonce(fromAddress);
-            BigInteger balance = ethereum.getRepository().getBalance(fromAddress);
-            byte[] data = new byte[0];
-            if (balance.compareTo(new BigInteger("2000000000000000000")) == 1 && txWaiters.isEmpty()) {
-                Transaction tx = new Transaction(
-                        ByteUtil.bigIntegerToBytes(nonce),
-                        ByteUtil.longToBytesNoLeadZeroes(ethereum.getGasPrice()),
-                        ByteUtil.longToBytesNoLeadZeroes(1_000_000),
-                        toAddress,
-                        ByteUtil.bigIntegerToBytes(BigInteger.valueOf(1_000_000_000_000_000_000L)), //1_000_000_000 gwei, 1_000_000_000_000L szabo, 1_000_000_000_000_000L finney, 1_000_000_000_000_000_000L ether
-                        data,
-                        ethereum.getChainIdForNextBlock());
-                tx.sign(ECKey.fromPrivate(senderPrivateKey));
-                //logger.info("<=== Sending transaction: " + tx);
-                ethereum.submitTransaction(tx);
-                //logger.info("<=== Check transactions: " + ethereum.getWireTransactions().size());
+            if( flag==0 ) {
+                flag = 2;
+                byte[] senderPrivateKey = Hex.decode("2222222222222222222222222222222222222222222222222222222222222222");
+                byte[] fromAddress = ECKey.fromPrivate(senderPrivateKey).getAddress();
+                byte[] toAddress = Hex.decode("2eb9e62aecfe1bf8b5115151903e0daa871e3ce0");
+                //logger.info("Miner " + number + " Balance : " + ethereum.getRepository().getBalance(fromAddress));
+                BigInteger nonce = ethereum.getRepository().getNonce(fromAddress);
+                BigInteger balance = ethereum.getRepository().getBalance(fromAddress);
+                byte[] data = new byte[0];
+                if (balance.compareTo(new BigInteger("2000000000000000000")) == 1 && txWaiters.isEmpty()) {
+                    Transaction tx = new Transaction(
+                            ByteUtil.bigIntegerToBytes(nonce),
+                            ByteUtil.longToBytesNoLeadZeroes(ethereum.getGasPrice()),
+                            ByteUtil.longToBytesNoLeadZeroes(1_000_000L),
+                            toAddress,
+                            ByteUtil.bigIntegerToBytes(BigInteger.valueOf(1_000_000_000_000_000_000L)), //1_000_000_000 gwei, 1_000_000_000_000L szabo, 1_000_000_000_000_000L finney, 1_000_000_000_000_000_000L ether
+                            data,
+                            ethereum.getChainIdForNextBlock());
+                    tx.sign(ECKey.fromPrivate(senderPrivateKey));
+                    //logger.info("<=== Sending transaction: " + tx);
+                    ethereum.submitTransaction(tx);
+                    try {
+                        waitForTx(tx.getHash());
+                        //logger.info("Transaction INCLUDED!");
+                    } catch (Exception e) {
+                        //txWaiters.clear();
+                        //logger.info("Transaction NOT packed.");
+                        //e.printStackTrace();
+                    }
+                }
+            }
+            //reset semaphore
+            flag = 0;
+            synchronized (this) {
                 try {
-                    waitForTx(tx.getHash());
-                    //logger.info("Transaction INCLUDED!");
+                    wait(2000);
                 } catch (InterruptedException e) {
-                    txWaiters.clear();
-                    //logger.info("Transaction NOT packed.");
-                    //e.printStackTrace();
+                    e.printStackTrace();
                 }
             }
         }
@@ -589,7 +651,7 @@ public class MyHashContractTrioSample {
         }
 
 
-        private TransactionReceipt waitForTx(byte[] txHash) throws InterruptedException {
+        private TransactionReceipt waitForTx(byte[] txHash) throws InterruptedException,RuntimeException {
             ByteArrayWrapper txHashW = new ByteArrayWrapper(txHash);
             txWaiters.put(txHashW, null);
             long startBlock = ethereum.getBlockchain().getBestBlock().getNumber();
@@ -602,7 +664,8 @@ public class MyHashContractTrioSample {
                 } else {
                     long curBlock = ethereum.getBlockchain().getBestBlock().getNumber();
                     if (curBlock > startBlock + 16) {
-                        throw new RuntimeException("The transaction was NOT included in last 16 blocks: " + txHashW.toString().substring(0,8));
+                        txWaiters.remove(txHashW);
+                        throw new RuntimeException("Transaction NOT included in 16 blocks: " + txHashW.toString().substring(0,8));
                     } else {
                         //logger.info("Waiting for block with transaction 0x" + txHashW.toString().substring(0,8) +
                         //        " packed (" + (curBlock - startBlock) + " blocks received so far) ...");
@@ -640,22 +703,18 @@ public class MyHashContractTrioSample {
     public static void main(String[] args){
 
         BasicSample.sLogger.info("Starting EthtereumJ regular peer instance!");
-        Ethereum peer = EthereumFactory.createEthereum(MyHashContractTrioSample.RegularPeerConfig.class);
+        Ethereum peer = EthereumFactory.createEthereum(TestVerifyBytesStream.RegularPeerConfig.class);
 
 
         BasicSample.sLogger.info("Starting EthtereumJ miner 1 instance!");
-        Ethereum miner1 = EthereumFactory.createEthereum(MyHashContractTrioSample.MinerConfig1.class);
+        Ethereum miner1 = EthereumFactory.createEthereum(TestVerifyBytesStream.MinerConfig1.class);
 
         //miner1.getBlockMiner().startMining();
 
         BasicSample.sLogger.info("Starting EthtereumJ miner 2 instance!");
-        Ethereum miner2 = EthereumFactory.createEthereum(MyHashContractTrioSample.MinerConfig2.class);
+        Ethereum miner2 = EthereumFactory.createEthereum(TestVerifyBytesStream.MinerConfig2.class);
         //miner2.getBlockMiner().startMining();
 
     }
-
-
-
-
 
 }
