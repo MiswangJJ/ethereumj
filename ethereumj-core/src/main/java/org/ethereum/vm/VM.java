@@ -61,6 +61,10 @@ import static org.ethereum.vm.OpCode.*;
  */
 public class VM {
 
+
+    private final int MY_GAS_ZOOM_OUT_COEFFICIENT = 1_000_000_000;
+
+
     //Test purpose only
     //Set a fixed zero gas consumption for all contract
     //Comment line 122 and de-comment line 121 to remove this setting
@@ -117,7 +121,7 @@ public class VM {
             long copyGas = gasCosts.getCOPY_GAS() * ((copySize + 31) / 32);
             gasCost += copyGas;
         }
-        return gasCost;
+        return gasCost / MY_GAS_ZOOM_OUT_COEFFICIENT;
         //if(gasCost!=0)
         //    System.out.println("Gas cost: "+gasCost);
         //return FIXED_GAS_COST;
