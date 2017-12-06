@@ -11,6 +11,8 @@ import org.spongycastle.util.Arrays;
 import org.spongycastle.util.BigIntegers;
 
 import java.math.BigInteger;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static org.ethereum.crypto.HashUtil.sha3;
 
@@ -65,6 +67,7 @@ public class Miner {
 
 //        eval(_root, _nonce) <= (bigint(1) << 256) / _difficulty; }
         stop = false;
+
         BigInteger max = BigInteger.valueOf(2).pow(255);
         byte[] target = BigIntegers.asUnsignedByteArray(32,
                 max.divide(new BigInteger(1, difficulty)));
@@ -84,7 +87,6 @@ public class Miner {
             if (testNonce[31] == 0 && testNonce[30] == 0) {
                 System.out.println("mining: " + new BigInteger(1, testNonce));
             }
-
             if (testNonce[31] == 0)
                 sleep();
             concat = Arrays.concatenate(hash, testNonce);

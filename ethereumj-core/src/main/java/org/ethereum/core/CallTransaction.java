@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -90,6 +91,8 @@ public class CallTransaction {
         public byte[] encode(Object ... args) {
             return ByteUtil.merge(encodeSignature(), encodeArguments(args));
         }
+
+
         public byte[] encodeArguments(Object ... args) {
             if (args.length > inputs.length) throw new RuntimeException("Too many arguments: " + args.length + " > " + inputs.length);
 

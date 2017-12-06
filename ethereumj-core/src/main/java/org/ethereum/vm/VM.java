@@ -15,10 +15,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.ethereum.util.ByteUtil.*;
 import static org.ethereum.crypto.HashUtil.sha3;
@@ -120,8 +117,10 @@ public class VM {
             long copyGas = gasCosts.getCOPY_GAS() * ((copySize + 31) / 32);
             gasCost += copyGas;
         }
-        //return gasCost;
-        return FIXED_GAS_COST;
+        return gasCost;
+        //if(gasCost!=0)
+        //    System.out.println("Gas cost: "+gasCost);
+        //return FIXED_GAS_COST;
     }
 
     private boolean isDeadAccount(Program program, byte[] addr) {
@@ -233,7 +232,29 @@ public class VM {
                     gasCost = gasCosts.getSHA3() + calcMemGas(gasCosts, oldMemSize, memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
                     DataWord size = stack.get(stack.size() - 2);
                     long chunkUsed = (size.longValueSafe() + 31) / 32;
-                    gasCost += chunkUsed * gasCosts.getSHA3_WORD();
+//                    gasCost += chunkUsed * gasCosts.getSHA3_WORD();
+
+                    //Modify here to increase gas cost of verify operations
+                    //Snark Verification is 60 times of sha3
+                    DataWord memOffsetData = program.stackPop();
+                    DataWord lengthData = program.stackPop();
+                    byte[] buffer = program.memoryChunk(memOffsetData.intValueSafe(), lengthData.intValueSafe());
+                    byte[] arg0 = Arrays.copyOfRange(buffer, 0, 32);
+                    String SNARK_ARG0 = "Privacy == (Ethereum += zkSnark)";
+                    if ( new String(arg0).equals(SNARK_ARG0) ) {
+                        if(lengthData.intValueSafe() > 20000){
+                            //System.out.println("Verification for Majority");
+                            //gasCost += 20000;
+                        } else {
+                            //System.out.println("Verification for Token");
+                            //gasCost += 5000;
+                        }
+                        gasCost += 80000 * (lengthData.intValueSafe() / 192) + 100000;
+                        //gasCost += 39 * chunkUsed * gasCosts.getSHA3_WORD();
+                    }
+                    program.stackPush(lengthData.getData());
+                    program.stackPush(memOffsetData.getData());
+
                     break;
                 //case VERIFY:
                 //    gasCost += calcMemGas(gasCosts, oldMemSize,
@@ -679,6 +700,7 @@ public class VM {
                     //If the first 256bit word is NOT for SNARK
                     //Do the normal sha3 hash function
                     if ( !new String(arg0).equals(SNARK_ARG0) ) {
+                        long startingTime = System.currentTimeMillis();
                         //call sha3 method from crypto
                         byte[] encoded = sha3(buffer);
                         DataWord word = new DataWord(encoded);
@@ -686,16 +708,25 @@ public class VM {
                             hint = word.toString();
                         program.stackPush(word);
                         program.step();
+                        //long endingTime = System.currentTimeMillis();
+                        //System.out.println("SHA3: " + (endingTime - startingTime));
                     } else { //Otherwise, do snark processes
                         //TODO: revise solc completely such that VERIFY and SHA3 can be seperated
-                        //System.out.println("SHA3 input length: " + buffer.length);
-                        //for (int i = 0; i < buffer.length; i++) {
-                            //System.out.println(buffer[i]);
-                        //}
-                        //BigInteger bi = new BigInteger(Arrays.copyOfRange(buffer,32,buffer.length));
-                        //System.out.println(bi.toString(16));
+            //            long startingTime = System.currentTimeMillis();
                         BigInteger res =
-                                BigInteger.valueOf(Snarks.verify(Arrays.copyOfRange(buffer,32, buffer.length)));
+                                BigInteger.valueOf(new Snarks(new Random().nextLong()).verify(Arrays.copyOfRange(buffer,32, buffer.length)));
+            //            long endingTime = System.currentTimeMillis();
+            //            System.out.println("zk-Snarks: " + (endingTime - startingTime));
+            //            long startingTime1 = System.nanoTime();
+            //            sha3(buffer);
+            //            long endingTime1 = System.nanoTime();
+            //            System.out.println("SHA3: " + (endingTime1 - startingTime1));
+//                        if(lengthData.intValueSafe() > 20000){
+//                            System.out.println("Verification for Majority");
+//                        } else {
+//                            System.out.println("Verification for Token");
+//                        }
+
                         program.stackPush(new DataWord(copyToArray(res)));
                         program.step();
                     }
