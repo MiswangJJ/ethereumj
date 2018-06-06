@@ -62,7 +62,7 @@ import static org.ethereum.vm.OpCode.*;
 public class VM {
 
 
-    private final int MY_GAS_ZOOM_OUT_COEFFICIENT = 1_000_000_000;
+    private final int MY_GAS_ZOOM_OUT_COEFFICIENT = 1;
 
 
     //Test purpose only
@@ -121,10 +121,10 @@ public class VM {
             long copyGas = gasCosts.getCOPY_GAS() * ((copySize + 31) / 32);
             gasCost += copyGas;
         }
-        return gasCost / MY_GAS_ZOOM_OUT_COEFFICIENT;
+        //return gasCost / MY_GAS_ZOOM_OUT_COEFFICIENT;
         //if(gasCost!=0)
         //    System.out.println("Gas cost: "+gasCost);
-        //return FIXED_GAS_COST;
+        return FIXED_GAS_COST;
     }
 
     private boolean isDeadAccount(Program program, byte[] addr) {
@@ -253,8 +253,10 @@ public class VM {
                             //System.out.println("Verification for Token");
                             //gasCost += 5000;
                         }
-                        gasCost += 80000 * (lengthData.intValueSafe() / 192) + 100000;
+                        //gasCost += 80000 * (lengthData.intValueSafe() / 192) + 100000;
                         //gasCost += 39 * chunkUsed * gasCosts.getSHA3_WORD();
+                    } else {
+                        //gasCost += chunkUsed * gasCosts.getSHA3_WORD();
                     }
                     program.stackPush(lengthData.getData());
                     program.stackPush(memOffsetData.getData());

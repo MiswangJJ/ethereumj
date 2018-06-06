@@ -38,9 +38,8 @@ import static util.Utils.encodeMultipleArgs;
 public class SnarkVerifyElevenPlayersMajority {
 
     /**
-     * Anonymous certificate parameters
+     * Anonymous certificates, there are 11 certificates in total
      */
-
     static BigInteger[][] tokens = {
             {new BigInteger("3278299071"),
                     new BigInteger("1501744326"),
@@ -143,6 +142,7 @@ public class SnarkVerifyElevenPlayersMajority {
                     new BigInteger("2548193269")}
     };
 
+    /** p and q are primes of RSA parameters for users' certificates
     static String[] p = {
             "fe27650b5653746c1e3b5baa756511fcf4874c013d6a88f392f658645c2a6acfbc4e3e492e00d47ba1abe9c41730cf49eddfc001a1f3cbbbfb8e21e4c8e253e9f8335a965766004d267e511a490f93b6b0e1611f8862c76aa20e0ce380ada0a60bbc2baf5e1fd07f4eeb4927f77b9da82908187ca69841e30a24ac31ab40b3d1",
             "fbc30ebf1ad5601fe1edfdc24fe2b1963a57baea80e3c22ce09deb9228d421707739c6ac271f94ff3051c93b6e3e7345e71c6117dd0be39815be977641a99d8c70e443438a5b6105336ba48baeb5ab715bb74495dd09a76263cc218eecdbd54b471c5b00270e191ccad86344e34994a0604fd6fb86c76e21286e0727eda5132d",
@@ -169,8 +169,12 @@ public class SnarkVerifyElevenPlayersMajority {
             "f530e19fcb71dd41c34298b63b307aa402444be2e377e5295f3565f4c8420c37d4c7a7a131fd1eaa7d401e364d12be706082a469edef099990dd07d92d0786bbca494f99007946eb05c3c113fd8855c288a89bb0da6d97c683d305087bf60b1545a88b96828bb9c9743dd086bea88c3f07e75f40eece0a24c48e6bc1af755949",
             "f5c872c2440bafe967aa41efaa04e9a125dd45c01df08e9b01c0e4957b12a22d5adca38bad06210d7535399e25a6b649184a11fd053d983bcabc71543e8a9e3b69f1be812bf95359f4720d207251b641bbb2faea2e9b1200563aa786b7788bfa08cc44707a8c01ec87b90139c4f88b8e37ffaeda6d70ee0b58020e4ac3fa9b83",
             "fbb6cbfd9a271f01009232ebb784510146703420ef83005477847f5dd3e84bdf906cc7ee2dc524351150e6eeb206c74f6e3d411a3c56897af921957a313f2425268413b3c20c97f9466e2da01f34b7a7394815fcd9cd145aa2c8fd820c5e3ae9a33a33a9024a531e2c236e6c67ab96df6069ca9d5804c4229f97b68bc77c9e45"
-    };
+    };*/
 
+
+    /**
+     * Some parameter of certificate authority
+     */
     static BigInteger[] pCAIn = new BigInteger[16];
     static BigInteger[] qCAIn = new BigInteger[16];
     static BigInteger[] dCAIn = new BigInteger[32];
@@ -195,7 +199,7 @@ public class SnarkVerifyElevenPlayersMajority {
     static BigInteger[] tIn = new BigInteger[1];
 
     /**
-     *
+     *   These are 11 cipher texts of encrypted answers
      */
     static String[] cipherText = {
             "09b107b5213a10baf13d1b3ec92d028dd1e20fee477e4abda8ee7be3b20eca0a7ee9ea256dc6d67eebb556510d3bb021dae01fd461903c49488a87288d130822ab25189ce6f17d77588a94ff478a3ffcbd5a2332ecb875641be58f29f3e99ae9017ad56a442bd99f75c1d4335189b2f5981818b1c8ede0096984b4004eb4555199943647d8a95d48571d00d941e3f56336738db88b895b12917496ed7183fc7186954c0e19434f627bc09234c76e847573fdc19c2d02b583e56bbab370f79400b9e6f2ddac91553d6fd398def57a6638a495334e7e0f43d76d78d31325950429988467262162f2f37082822b0640eeda252ccf42f510482c9cadd0719a67fffc",
@@ -211,6 +215,9 @@ public class SnarkVerifyElevenPlayersMajority {
             "8ecfbd360bf174469acdcb76afdca1fdd509099ca02b84ea4001ff109de1614cdd5521acd34410cda7588482e3968ee657a0b24763fece76753e0724ec1d1ac3bf2514f670573a755f6f6cdd2c2226ddacee74e2a0ce3bfe4eb574a3c23e49e6b20fd15dd9258fe778ab631afd7a0b2ed1bf05168bff80bb29b7c5570c73f23394012373136e15f028e53077bce663d93d629f39c3a43b569b7bdd73ada40260ea11d9b1a6197286b9e7562aab737d2106a8c5f3536a1961620ee905273328b4e4dc5c5c8d08249e43c81cb09c0c862d5e35be56904d68de418b653bb8448b06e236f74b4fa89674bbb16d922d26302f3440085658da768bbc8691eba1295f37"
     };
 
+    /**
+     * These are plaintext of 11 answers
+     */
     static BigInteger[] isMaj = {
             BigInteger.ZERO,
             BigInteger.ONE,
@@ -253,9 +260,9 @@ public class SnarkVerifyElevenPlayersMajority {
                         // special genesis for this test network
                         "genesis = genesis.json \n" +
                         "database.dir = peer \n" +
-                        "mine.coinbase = 2eb9e62aecfe1bf8b5115151903e0daa871e3ce0 \n" +
-                        "mine.cpuMineThreads = 1 \n" +
-                        "cache.flush.memory = 1";
+                        //"mine.coinbase = 2eb9e62aecfe1bf8b5115151903e0daa871e3ce0 \n" +
+                        //"mine.cpuMineThreads = 1 \n" +
+                        "cache.flush.memory = 0";
 
         @Bean
         public SnarkVerifyElevenPlayersMajority.RegularPeerNode node() {
@@ -587,45 +594,54 @@ public class SnarkVerifyElevenPlayersMajority {
 
             byte[] senderPrivateKey = Hex.decode("c940ad1df4aafcb7e30139429d1577dee8ef90498eec5403f379a7a223338505");
             byte[] fromAddress = ECKey.fromPrivate(senderPrivateKey).getAddress();
-            logger.info("Peer Balance : " + ethereum.getRepository().getBalance(fromAddress));
+
+            //logger.info("Peer Balance : " + ethereum.getRepository().getBalance(fromAddress));
 
             int failureCnt;
+
+
+
 
             /**
              * 0. Fund participants account
              */
-            for(int i = 0; i < 11; i++) {
-                failureCnt = 0;
-                while (failureCnt < 10) {
-                    String participant = participantsPrivateKeyStrings[i];
-                    byte[] participantPrivateKey = Hex.decode(participant);
-                    byte[] participantAddress = ECKey.fromPrivate(participantPrivateKey).getAddress();
-                    try {
-                        logger.info("The " + (failureCnt + 1) + " trail of funding participant " + i);
-                        sendTxAndWait(participantAddress, new byte[0], 3_000_000_000_000_000_000L, 100_000L);
-                        logger.info("Participant " + i + " funded!");
-                        break;
-                    } catch (RuntimeException e) {
-                        failureCnt++;
-                        logger.info("Transaction NOT packed!");
-                        continue;
+            boolean initial_fund_switch = false;
+            if (initial_fund_switch) {
+                for (int i = 0; i < 11; i++) {
+                    failureCnt = 0;
+                    while (failureCnt < 10) {
+                        String participant = participantsPrivateKeyStrings[i];
+                        byte[] participantPrivateKey = Hex.decode(participant);
+                        byte[] participantAddress = ECKey.fromPrivate(participantPrivateKey).getAddress();
+                        try {
+                            logger.info("The " + (failureCnt + 1) + " trail of funding participant " + i);
+                            long fund = 1_000_000_000_000_000_000L;
+                            sendTxAndWait(participantAddress, new byte[0], fund, 40000000);
+                            logger.info("Participant " + i + " funded!");
+                            break;
+                        } catch (RuntimeException e) {
+                            failureCnt++;
+                            logger.info("Transaction NOT packed!");
+                            continue;
+                        }
                     }
+                    Thread.sleep(5000);
                 }
-                Thread.sleep(5000);
             }
 
 
             BigInteger[] initialBalances = new BigInteger[12];
-            System.out.println("Initial balances:");
+            //System.out.println("Initial balances:");
             initialBalances[0] = ethereum.getRepository().getBalance(fromAddress);
             System.out.println(initialBalances[0]);
-            for(int i = 0; i < 11; i++) {
+            for (int i = 0; i < 11; i++) {
                 String participant = participantsPrivateKeyStrings[i];
                 byte[] participantPrivateKey = Hex.decode(participant);
                 byte[] participantAddress = ECKey.fromPrivate(participantPrivateKey).getAddress();
-                initialBalances[i+1] = ethereum.getRepository().getBalance(participantAddress);
-                System.out.println(initialBalances[i+1]);
+                initialBalances[i + 1] = ethereum.getRepository().getBalance(participantAddress);
+                //System.out.println(initialBalances[i + 1]);
             }
+
 
             /**
              * 1. Send out the Contract of crowdsourcing task
@@ -654,7 +670,7 @@ public class SnarkVerifyElevenPlayersMajority {
             while (failureCnt < 10) {
                 try {
                     logger.info("The " + (failureCnt + 1) + " trail of sending contract.");
-                    receipt = sendTxAndWait(new byte[0], Hex.decode(metadata.bin), 1_000L,3_000_000L);
+                    receipt = sendTxAndWait(new byte[0], Hex.decode(metadata.bin), 1_000L,3000000);
                     contractAddress = receipt.getTransaction().getContractAddress();
                     logger.info("Contract created: " + Hex.toHexString(contractAddress));
                     logger.info("Contract code: " + Hex.toHexString(Hex.decode(metadata.bin)));
@@ -689,7 +705,7 @@ public class SnarkVerifyElevenPlayersMajority {
                         BigInteger num = new BigInteger("11");
                         byte[] n = encodeBigIntegerArrayToEtherFormat(nIn);
                         byte[] nRe = encodeBigIntegerArrayToEtherFormat(nReIn);
-                        byte[] vk = encodeBytesArrayToEtherFormat(Utils.fileToBytes("ethereumj-application-demo/res/VK_Maj"));
+                        byte[] vk = encodeBytesArrayToEtherFormat(Utils.fileToBytes("ethereumj-application-demo/res/VK_Maj_"+num));
                         byte[] ca_n = encodeBigIntegerArrayToEtherFormat(nCAIn);
                         byte[] ca_nRe = encodeBigIntegerArrayToEtherFormat(nReCAIn);
                         byte[] ca_vk = encodeBytesArrayToEtherFormat(Utils.fileToBytes("ethereumj-application-demo/res/VK_Certificate"));
@@ -697,14 +713,16 @@ public class SnarkVerifyElevenPlayersMajority {
                         CallTransaction.Function init = contract.getByName("init");
                         byte[] functionCallBytes =  encodeMultipleArgs(init, num, n, nRe, vk, ca_n, ca_nRe, ca_vk);
                         logger.info("Set up initial encryption parameters!");
-                        //bonus = 1000000000000000
+                        long bonus = 667000000000010000L;
                         // //2_000_000_000_000
                         //700_000_000_000_000
-                        receipt1 = sendTxAndWait(contractAddress, functionCallBytes,22_700_000_000_000_000L,40_000_000L);
+                        receipt1 = sendTxAndWait(contractAddress, functionCallBytes,bonus,40_000_000L);
                         logger.info("Initial encryption parameters included!");
                         byte[] ret = receipt1.getExecutionResult();
                         if(ret != null) {
                             System.out.println("Deposit:");
+                            //System.out.println(ret.length);
+                            //System.out.println(Hex.toHexString(ret));
                             System.out.println(new BigInteger(ret));
                         }
                         break;
@@ -739,14 +757,16 @@ public class SnarkVerifyElevenPlayersMajority {
                         byte[] functionCallBytes = encodeMultipleArgs(submit, token, proof, submission);
                         //byte[] functionCallBytes = merge(functionCallBytesPrefix, submission);
                         logger.info("Submit 0 data !");//2000000000000000
-                        receipt2 = sendTxAndWait(participant, contractAddress, functionCallBytes,0_000_000_000_000_000L,3_000_000L);
+                        receipt2 = sendTxAndWait(participant, contractAddress, functionCallBytes,000L,3000000);
                         logger.info("The 0 data included!");
                         byte[] ret = receipt2.getExecutionResult();
                         System.out.println("Data /w token verification result:");
                         if (bytesToBigInteger(ret).intValue() == 1)
-                            System.out.println("Data submitted with valid token!");
-                        else
+                            System.out.println("Data submitted with valid anonymous token!");
+                        else {
                             System.out.println("Data rejected with invalid token!");
+                            throw new RuntimeException("Data validation fails");
+                        }
                         break;
                     } catch (RuntimeException e) {
                         failureCnt++;
@@ -756,7 +776,7 @@ public class SnarkVerifyElevenPlayersMajority {
                 }
             }
             Thread.sleep(500);
-            //3.2 A malicious participant tries to send duplicated data
+            //3.2 A malicious participant tries to double submit data
             boolean maliciousData = false;
             if (maliciousData) {
                 receipt2 = null;
@@ -775,7 +795,7 @@ public class SnarkVerifyElevenPlayersMajority {
                             byte[] functionCallBytes = encodeMultipleArgs(submit, token, proof, submission);
                             //byte[] functionCallBytes = merge(functionCallBytesPrefix, submission);
                             logger.info("Submit 0 data !");
-                            receipt2 = sendTxAndWait(participant, contractAddress, functionCallBytes, 0_000_000_000_000_000L, 3_000_000L);
+                            receipt2 = sendTxAndWait(participant, contractAddress, functionCallBytes, 000L, 3000000);
                             logger.info("The 0 data included!");
                             byte[] ret = receipt2.getExecutionResult();
                             System.out.println("Data /w token verification result:");
@@ -813,14 +833,16 @@ public class SnarkVerifyElevenPlayersMajority {
                             byte[] functionCallBytes = encodeMultipleArgs(submit, token, proof, submission);
                             //byte[] functionCallBytes = merge(functionCallBytesPrefix, submission);
                             logger.info("Submit " + submissionCnt + " data !");
-                            receipt2 = sendTxAndWait(participant, contractAddress, functionCallBytes,0_000_000_000_000_000L,3_000_000L);
+                            receipt2 = sendTxAndWait(participant, contractAddress, functionCallBytes,000L,3000000);
                             logger.info("The " + submissionCnt + " data included!");
                             byte[] ret = receipt2.getExecutionResult();
                             System.out.println("Data /w token verification result:");
                             if (bytesToBigInteger(ret).intValue() == 1)
-                                System.out.println("Data submitted with valid token!");
-                            else
+                                System.out.println("Data submitted with valid anonymous token!");
+                            else {
                                 System.out.println("Data rejected with invalid token!");
+                                throw new RuntimeException("Data validation fails");
+                            }
                             submissionCnt++;
                             break;
                         } catch (RuntimeException e) {
@@ -847,13 +869,13 @@ public class SnarkVerifyElevenPlayersMajority {
                     try {
                         byte[] digest = encodeBigIntegerArrayToEtherFormat(Utils.hexDigestTo8BigIntegers(majDigest));
                         byte[] isMajVector = encodeBigIntegerArrayToEtherFormat(isMaj);
-                        byte[] proof = encodeBytesArrayToEtherFormat(Utils.fileToBytes("ethereumj-application-demo/res/Proof_Maj"));
+                        byte[] proof = encodeBytesArrayToEtherFormat(Utils.fileToBytes("ethereumj-application-demo/res/Proof_Maj_11"));
                         logger.info("The " + (failureCnt + 1) + " trail to end task by calling 'end'");
                         CallTransaction.Function end = contract.getByName("end");
 
                         byte[] functionCallBytes = encodeMultipleArgs(end, majCount, digest, isMajVector, proof);
                         logger.info("Do verification request!");
-                        verificationReceipt = sendTxAndWait(contractAddress, functionCallBytes,0L,2_000_000L);
+                        verificationReceipt = sendTxAndWait(contractAddress, functionCallBytes,000L,50_000_000_000L);
                         logger.info("Verification result received!");
 
                         byte[] ret = verificationReceipt.getExecutionResult();
@@ -887,7 +909,7 @@ public class SnarkVerifyElevenPlayersMajority {
                         CallTransaction.Function fundBonus = contract.getByName("fund_bonus");
                         byte[] functionCallBytes = fundBonus.encode();
                         logger.info("Do fund bonus request!");
-                        fundBonusReceipt = sendTxAndWait(contractAddress, functionCallBytes,0L,500_000L);
+                        fundBonusReceipt = sendTxAndWait(contractAddress, functionCallBytes,0L,300_000_000L);
                         logger.info("Fund bonus received!");
 
                         byte[] ret = fundBonusReceipt.getExecutionResult();
@@ -1002,7 +1024,7 @@ public class SnarkVerifyElevenPlayersMajority {
             Transaction tx = new Transaction(
                     bigIntegerToBytes(nonce),
                     //ByteUtil.longToBytesNoLeadZeroes(1 * ethereum.getGasPrice() / 1024),
-                    ByteUtil.longToBytesNoLeadZeroes(22145659410L),
+                    ByteUtil.longToBytesNoLeadZeroes(20000000L),
                     ByteUtil.longToBytesNoLeadZeroes(gas),
                     receiveAddress,
                     ByteUtil.longToBytesNoLeadZeroes(value),
@@ -1127,7 +1149,7 @@ public class SnarkVerifyElevenPlayersMajority {
                         "mine.extraDataHex = bbbbbbbbbbbbbbbbbbbb \n" +
                         "mine.coinbase = 19e7e376e7c213b7e7e7e46cc70a5dd086daff2a \n" +
                         "mine.cpuMineThreads = 2 \n" +
-                        "cache.flush.blocks = 0";
+                        "cache.flush.blocks = 1";
 
         @Bean
         public SnarkVerifyElevenPlayersMajority.MinerNode1 node() {
@@ -1341,7 +1363,7 @@ public class SnarkVerifyElevenPlayersMajority {
                         "mine.extraDataHex = cccccccccccccccccccc \n" +
                         "mine.cpuMineThreads = 2 \n" +
                         "mine.coinbase = 1563915e194d8cfba1943570603f7606a3115508 \n" +
-                        "cache.flush.blocks = 0";
+                        "cache.flush.blocks = 1";
 
         @Bean
         public SnarkVerifyElevenPlayersMajority.MinerNode2 node() {
@@ -1385,6 +1407,7 @@ public class SnarkVerifyElevenPlayersMajority {
                 // calling this just for indication of the dataset generation
                 // basically this is not required
                 Ethash ethash = Ethash.getForBlock(config, ethereum.getBlockchain().getBestBlock().getNumber());
+                logger.info("0");
                 ethash.getFullDataset();
                 logger.info("Full dataset generated (loaded).");
             }
@@ -1534,17 +1557,19 @@ public class SnarkVerifyElevenPlayersMajority {
 
         BasicSample.sLogger.info("Starting EthtereumJ regular peer instance!");
         Ethereum peer = EthereumFactory.createEthereum(SnarkVerifyElevenPlayersMajority.RegularPeerConfig.class);
+        //peer.getBlockMiner().startMining();
 
 
         BasicSample.sLogger.info("Starting EthtereumJ miner 1 instance!");
         Ethereum miner1 = EthereumFactory.createEthereum(SnarkVerifyElevenPlayersMajority.MinerConfig1.class);
-
+        //miner1.getBlockMiner().stopMining();
         //miner1.getBlockMiner().startMining();
+        //miner1.getBlockMiner().stopMining();
 
         BasicSample.sLogger.info("Starting EthtereumJ miner 2 instance!");
         Ethereum miner2 = EthereumFactory.createEthereum(SnarkVerifyElevenPlayersMajority.MinerConfig2.class);
         //miner2.getBlockMiner().startMining();
-
+        //miner2.getBlockMiner().stopMining();
     }
 
 

@@ -109,6 +109,7 @@ public class Ethash {
     public synchronized int[] getFullDataset() {
         if (fullData == null) {
             File file = new File(config.databaseDir(), "mine-dag.dat");
+            logger.info("1");
             if (fileCacheEnabled && file.canRead()) {
                 try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
                     logger.info("Loading dataset from " + file.getAbsolutePath());
@@ -123,7 +124,7 @@ public class Ethash {
                     throw new RuntimeException(e);
                 }
             }
-
+            logger.info("2");
             if (fullData == null){
 
                 logger.info("Calculating full dataset...");

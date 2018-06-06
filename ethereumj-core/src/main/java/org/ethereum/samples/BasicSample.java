@@ -20,10 +20,12 @@ import org.ethereum.net.server.Channel;
 import org.ethereum.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
 import javax.annotation.PostConstruct;
+import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -330,7 +332,7 @@ public class BasicSample implements Runnable {
                 gasSpent += ByteUtil.byteArrayToLong(receipt.getGasUsed());
             }
             if (syncComplete) {
-                logger.info("New block: " + block.getShortDescr());
+                logger.info("New block: " + block.getShortDescr() + ", GasLimit: " + new BigInteger(block.getGasLimit())+ ", GasPrice: " + block.getGasUsed());
             }
         }
         @Override

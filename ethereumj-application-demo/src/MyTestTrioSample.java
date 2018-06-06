@@ -59,8 +59,8 @@ public class MyTestTrioSample  {
                         "peer.privateKey = c940ad1df4aafcb7e30139429d1577dee8ef90498eec5403f379a7a223338505 \n" +
                         // a number of public peers for this network (not all of then may be functioning)
                         "peer.active = [" +
-                        "    { url = 'enode://4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1@128.235.40.193:30001' }," +
-                        "    { url = 'enode://466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f276728176c3c6431f8eeda4538dc37c865e2784f3a9e77d044f33e407797e1278a@128.235.40.193:30002' }" +
+                        "    { url = 'enode://4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1@127.0.0.1:30001' }," +
+                        "    { url = 'enode://466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f276728176c3c6431f8eeda4538dc37c865e2784f3a9e77d044f33e407797e1278a@127.0.0.1:30002' }" +
                         "] \n" +
                         "sync.enabled = true \n" +
                         // special genesis for this test network
@@ -140,8 +140,8 @@ public class MyTestTrioSample  {
                         "peer.networkId = 31376419 \n" +
                         // a number of public peers for this network (not all of then may be functioning)
                         "peer.active = [" +
-                        "    { url = 'enode://7ee4d7e0a45fcb040b215ed4f842b129e8d7b2e715fafa009a8908044a57b3c1015659b199c3047f47b77c901b35e13b9a42eaa2a5fc6e87ad3764afc2b98682@128.235.40.193:33333' }," +
-                        "    { url = 'enode://466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f276728176c3c6431f8eeda4538dc37c865e2784f3a9e77d044f33e407797e1278a@128.235.40.193:30002' }" +
+                        "    { url = 'enode://7ee4d7e0a45fcb040b215ed4f842b129e8d7b2e715fafa009a8908044a57b3c1015659b199c3047f47b77c901b35e13b9a42eaa2a5fc6e87ad3764afc2b98682@127.0.0.1:33333' }," +
+                        "    { url = 'enode://466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f276728176c3c6431f8eeda4538dc37c865e2784f3a9e77d044f33e407797e1278a@127.0.0.1:30002' }" +
                         "] \n" +
                         // we have no peers to sync with
                         "sync.enabled = true \n" +
@@ -256,8 +256,8 @@ public class MyTestTrioSample  {
                         "peer.networkId = 31376419 \n" +
                         // a number of public peers for this network (not all of then may be functioning)
                         "peer.active = [" +
-                        "    { url = 'enode://4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1@128.235.40.193:30001' }," +
-                        "    { url = 'enode://7ee4d7e0a45fcb040b215ed4f842b129e8d7b2e715fafa009a8908044a57b3c1015659b199c3047f47b77c901b35e13b9a42eaa2a5fc6e87ad3764afc2b98682@128.235.40.193:33333' }" +
+                        "    { url = 'enode://4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1@127.0.0.1:30001' }," +
+                        "    { url = 'enode://7ee4d7e0a45fcb040b215ed4f842b129e8d7b2e715fafa009a8908044a57b3c1015659b199c3047f47b77c901b35e13b9a42eaa2a5fc6e87ad3764afc2b98682@127.0.0.1:33333' }" +
                         "] \n" +
                         // we have no peers to sync with
                         "sync.enabled = true \n" +

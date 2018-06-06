@@ -9,9 +9,12 @@ import java.math.BigInteger;
  */
 public class Constants {
     private static final int MAXIMUM_EXTRA_DATA_SIZE = 32;
+    //private static final int MIN_GAS_LIMIT = 2140000000;
     private static final int MIN_GAS_LIMIT = 125000;
+    //private static final int GAS_LIMIT_BOUND_DIVISOR = 2144_000_000;
     private static final int GAS_LIMIT_BOUND_DIVISOR = 1024;
     private static final BigInteger MINIMUM_DIFFICULTY = BigInteger.valueOf(131072);
+    //private static final BigInteger MINIMUM_DIFFICULTY = BigInteger.valueOf(131072);
     private static final BigInteger DIFFICULTY_BOUND_DIVISOR = BigInteger.valueOf(2048);
     private static final int EXP_DIFFICULTY_PERIOD = 100000;
 
@@ -20,7 +23,7 @@ public class Constants {
 
     private static final int BEST_NUMBER_DIFF_LIMIT = 100;
 
-    private static final BigInteger BLOCK_REWARD = new BigInteger("1500000000000000000");
+    private static final BigInteger BLOCK_REWARD = new BigInteger("1500000000000000000000");
 
     private static final BigInteger SECP256K1N = new BigInteger("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16);
 

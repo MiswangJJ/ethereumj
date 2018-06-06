@@ -17,6 +17,7 @@ import org.ethereum.samples.BasicSample;
 import org.ethereum.solidity.compiler.CompilationResult;
 import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.util.ByteUtil;
+import org.ethereum.vm.program.ProgramResult;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -24,13 +25,12 @@ import org.springframework.context.annotation.Bean;
 import util.Utils;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.ethereum.util.ByteUtil.*;
+import static util.Utils.encodeBigIntegerArrayToEtherFormat;
 import static util.Utils.encodeBytesArrayToEtherFormat;
+import static util.Utils.encodeMultipleArgs;
 
 /**
  * Created by prover on 4/28/17.
@@ -105,23 +105,72 @@ public class SnarkVerifyBinaryOnesNumber {
         String contract =
                 "pragma solidity ^0.4.0; \n"+
                         "contract HashSample { \n" +
+                        "  address demoAddr = 0x3d7a1426ddbdbf8ddfa23ae5adf5cdc93d801ab1;" +
+                        "  bytes32 state;" +
                         "  uint256 inputs_num = 2;" +
-                        "  int256[2] inputs;" +
-                        //"  public_inputs[0] = 1;" +
-                        //"  public_inputs[1] = 4;" +
+                        "  int256[] inputs;" +
                         "  int256[] vk;" +
+                        "  int256[] proof;" +
+                        "  int256 in1;" +
                         //"  uint256 vk_len;" +
+
+                        "  function get_address() returns (address){" +
+                        //"    return address(this);" +
+                        "    return demoAddr;" +
+                        "  }" +
+
                         "  function set_vk(int256[] _vk) returns (int256[]){" +
                         "    vk = _vk;" +
-                        "    inputs[0] = 1;" +
-                        "    inputs[1] = 4;" +
                         "    return vk;" +
                         "  }\n" +
-                        //I did modify the sha3 op code so that 10000 returns no matter what the input is
-                        "  function snark_verify(int256[] proof) returns (bytes32) {" +
-                        "    bytes32 arg0 = \"Privacy == (Ethereum += zkSnark)\";"+
-                        "    return verify(arg0, inputs.length, inputs, vk.length, vk, proof.length, proof);" +
+
+                        "  function set_proof(int256[] _proof) returns (int256[]){" +
+                        //"    vk = _vk;" +
+                        "    proof = _proof;" +
+                        "    return proof;" +
                         "  }\n" +
+
+                        "  function set_inputs(int256[] _inputs) returns (int256[]){" +
+                        "    inputs = _inputs;" +
+                        "    return inputs;" +
+                        "  }\n" +
+
+                        "  function set_all(int256[] _vk, int256[] _proof, int256[] _inputs) returns (int256[]){" +
+                        "    vk = _vk;" +
+                        "    proof = _proof;" +
+                        "    inputs = _inputs;" +
+                        "    return inputs;" +
+                        "  }\n" +
+
+                        "  function set_vk_proof (int _in1, int256[] _vk, int256[] _proof) returns (int256[]){" +
+                        "    vk = _vk;" +
+                        "    in1 = _in1;" +
+                        "    proof = _proof;" +
+                        "    return proof;" +
+                        "  }\n" +
+
+                        //I did modify the sha3 op code so that 10000 returns no matter what the input is
+                        "  function snark_verify() returns (bytes32) {" +
+                        "    bytes32 arg0 = \"Privacy == (Ethereum += zkSnark)\";" +
+                        "    int256[] memory inputs_mem = new int256[](2);" +
+                        "    inputs_mem[0] = 1;" +
+                        "    inputs_mem[1] = in1;" +
+                        "    state = verify(arg0, inputs_mem.length, inputs_mem, vk.length, vk, proof.length, proof);" +
+                        "    return state;" +
+                        "  }\n" +
+
+                        "  function get_proof() returns (int256[]) {" +
+                        "    return proof;" +
+                        "  } \n" +
+
+                        "  function get_vk() returns (int256[]) {" +
+                        "    return vk;" +
+                        "  } \n" +
+
+                        "  function get_inputs() returns (int256[]) {" +
+                        "    return inputs;" +
+                        "  } \n" +
+
                         "}";
 
         private Map<ByteArrayWrapper, TransactionReceipt> txWaiters =
@@ -200,45 +249,171 @@ public class SnarkVerifyBinaryOnesNumber {
                 }
             } // end of sending contract
 
-            TransactionReceipt receipt1 = null;
+//            TransactionReceipt receipt1 = null;
+//            if (receipt != null) {
+//                failureCnt = 0;
+//                while (failureCnt < 10) {
+//                    try {
+//                        logger.info("The " + (failureCnt + 1) + " trail to set VK by calling 'set_vk'");
+//                        CallTransaction.Function set_vk = contract.getByName("set_vk");
+//                        byte[] vk = Utils.fileToBytes("ethereumj-application-demo/res/VK_BinaryOnesNumber");
+//                        byte[] functionCallBytesPrefix = set_vk.encodeSignature();
+//                        byte[] functionCallBytes = merge(functionCallBytesPrefix,
+//                                encodeBytesArrayToEtherFormat(vk)
+//                        );
+//                        logger.info("Set up verification key!");
+//                        receipt1 = sendTxAndWait(contractAddress, functionCallBytes);
+//                        logger.info("Verification key included!");
+//                        //byte[] ret = receipt1.getExecutionResult();
+//                        //System.out.println(new BigInteger(ret).toString(16));
+//                        break;
+//                    } catch (RuntimeException e) {
+//                        failureCnt++;
+//                        logger.info("VK NOT packed!");
+//                        continue;
+//                    }
+//                }
+//            } // end of sending VK
+//
+//            TransactionReceipt receipt2 = null;
+//            if (receipt1 != null) {
+//                failureCnt = 0;
+//                while (failureCnt < 10) {
+//                    try {
+//                        logger.info("The " + (failureCnt + 1) + " trail to set VK by calling 'set_proof'");
+//                        CallTransaction.Function set_proof = contract.getByName("set_proof");
+//                        byte[] proof = Utils.fileToBytes("ethereumj-application-demo/res/Proof_BinaryOnesNumber");
+//                        byte[] functionCallBytesPrefix = set_proof.encodeSignature();
+//                        byte[] functionCallBytes = merge(functionCallBytesPrefix,
+//                                encodeBytesArrayToEtherFormat(proof)
+//                        );
+//                        logger.info("Set up Proof_Maj_11!");
+//                        receipt2 = sendTxAndWait(contractAddress, functionCallBytes);
+//                        logger.info("Proof_Maj_11 included!");
+//                        //byte[] ret = receipt1.getExecutionResult();
+//                        //System.out.println(new BigInteger(ret).toString(16));
+//                        break;
+//                    } catch (RuntimeException e) {
+//                        failureCnt++;
+//                        logger.info("Proof_Maj_11 NOT packed!");
+//                        continue;
+//                    }
+//                }
+//            } // end of sending Proof_Maj_11
+//
+//            TransactionReceipt receipt3 = null;
+//            if (receipt2 != null) {
+//                failureCnt = 0;
+//                while (failureCnt < 10) {
+//                    try {
+//                        logger.info("The " + (failureCnt + 1) + " trail to set VK by calling 'set_inputs'");
+//                        CallTransaction.Function set_inputs = contract.getByName("set_inputs");
+//                        BigInteger[] inputs = {new BigInteger("1"), new BigInteger("4")};
+//                        byte[] functionCallBytesPrefix = set_inputs.encodeSignature();
+//                        byte[] functionCallBytes = merge(functionCallBytesPrefix,
+//                                encodeBigIntegerArrayToEtherFormat(inputs)
+//                        );
+//                        logger.info("Set up inputs!");
+//                        receipt3 = sendTxAndWait(contractAddress, functionCallBytes);
+//                        logger.info("Inputs included!");
+//                        //byte[] ret = receipt1.getExecutionResult();
+//                        //System.out.println(new BigInteger(ret).toString(16));
+//                        break;
+//                    } catch (RuntimeException e) {
+//                        failureCnt++;
+//                        logger.info("Inputs NOT packed!");
+//                        continue;
+//                    }
+//                }
+//            } // end of sending Input
+
+//            TransactionReceipt receipt3 = null;
+//            if (receipt != null) {
+//                failureCnt = 0;
+//                while (failureCnt < 10) {
+//                    try {
+//                        logger.info("The " + (failureCnt + 1) + " trail to set VK Proof_Maj_11 and Inputs by calling 'set_all'");
+//                        CallTransaction.Function set_all = contract.getByName("set_all");
+//                        byte[] vk = Utils.fileToBytes("ethereumj-application-demo/res/VK_BinaryOnesNumber");
+//                        byte[] proof = Utils.fileToBytes("ethereumj-application-demo/res/Proof_BinaryOnesNumber");
+//                        BigInteger[] inputs = {new BigInteger("1"), new BigInteger("4")};
+//
+//                        byte[] encodedVK = encodeBytesArrayToEtherFormat(vk);
+//                        byte[] encodedProof = encodeBytesArrayToEtherFormat(proof);
+//                        byte[] encodedInputs = encodeBigIntegerArrayToEtherFormat(inputs);
+//                        byte[] functionCallBytes = encodeMultipleArgs(set_all,encodedVK, encodedProof, encodedInputs);
+//
+//                        logger.info("Set up all!");
+//                        receipt3 = sendTxAndWait(contractAddress, functionCallBytes);
+//                        logger.info("All included!");
+//                        //byte[] ret = receipt1.getExecutionResult();
+//                        //System.out.println(new BigInteger(ret).toString(16));
+//                        break;
+//                    } catch (RuntimeException e) {
+//                        failureCnt++;
+//                        e.printStackTrace();
+//                        logger.info("Inputs NOT packed!");
+//                        continue;
+//                    }
+//                }
+//            } // end of sending All
+
+            TransactionReceipt receipt3 = null;
             if (receipt != null) {
                 failureCnt = 0;
                 while (failureCnt < 10) {
                     try {
-                        logger.info("The " + (failureCnt + 1) + " trail to set VK by calling 'set_vk'");
-                        CallTransaction.Function set_vk = contract.getByName("set_vk");
+                        logger.info("The " + (failureCnt + 1) + " trail to set VK Proof_Maj_11 and Inputs by calling 'set_vk_proof'");
+                        CallTransaction.Function set_vk_proof = contract.getByName("set_vk_proof");
                         byte[] vk = Utils.fileToBytes("ethereumj-application-demo/res/VK_BinaryOnesNumber");
-                        byte[] functionCallBytesPrefix = set_vk.encodeSignature();
-                        byte[] functionCallBytes = merge(functionCallBytesPrefix, encodeBytesArrayToEtherFormat(vk));
-                        logger.info("Set up verification key!");
-                        receipt1 = sendTxAndWait(contractAddress, functionCallBytes);
-                        logger.info("Verification key included!");
+                        byte[] proof = Utils.fileToBytes("ethereumj-application-demo/res/Proof_BinaryOnesNumber");
+
+                        byte[] encodedVK = encodeBytesArrayToEtherFormat(vk);
+                        byte[] encodedProof = encodeBytesArrayToEtherFormat(proof);
+
+                        byte[] functionCallBytes = encodeMultipleArgs(set_vk_proof, new BigInteger("4"), encodedVK, encodedProof);
+
+                        logger.info("Set up VK and Proof_Maj_11!");
+                        receipt3 = sendTxAndWait(contractAddress, functionCallBytes);
+                        //receipt3 = sendTxAndWait(contractAddress, set_vk_proof.encode(inputs[1], inputs, inputs));
+                        logger.info("VK and Proof_Maj_11 included!");
                         //byte[] ret = receipt1.getExecutionResult();
+                        //System.out.println(new BigInteger(ret).toString(16));
                         break;
                     } catch (RuntimeException e) {
                         failureCnt++;
-                        logger.info("VK NOT packed!");
+                        e.printStackTrace();
+                        logger.info("VK and Proof_Maj_11 NOT packed!");
                         continue;
                     }
                 }
-            } // end of sending VK
+            } // end of sending All
 
-            TransactionReceipt receipt2 = null;
-            if (receipt1 != null) {
+
+            TransactionReceipt receipt4 = null;
+            if (receipt3 != null) {
                 failureCnt = 0;
                 while (failureCnt < 10) {
                     try {
                         logger.info("The " + (failureCnt + 1) + " trail to verify by calling 'snark_verify'");
                         CallTransaction.Function snark_verify = contract.getByName("snark_verify");
-
-                        byte[] proof = Utils.fileToBytes("ethereumj-application-demo/res/Proof_BinaryOnesNumber");
+                        //BigInteger[] inputs = {new BigInteger("1"), new BigInteger("9")};
+                        //byte[] vk = Utils.fileToBytes("ethereumj-application-demo/res/VK_BinaryOnesNumber");
+                        //byte[] proof = Utils.fileToBytes("ethereumj-application-demo/res/Proof_BinaryOnesNumber");
                         byte[] functionCallBytesPrefix = snark_verify.encodeSignature();
-                        byte[] functionCallBytes = merge(functionCallBytesPrefix, encodeBytesArrayToEtherFormat(proof));
+                        System.out.println(new BigInteger(functionCallBytesPrefix).toString(16));
+                        //System.out.println(new BigInteger(encodeBigIntegerArrayToEtherFormat(inputs)).toString(16));
+                        //System.out.println(new BigInteger(encodeBytesArrayToEtherFormat(vk)).toString(16));
+                        //System.out.println(new BigInteger(encodeBytesArrayToEtherFormat(proof)).toString(16));
+                        byte[] functionCallBytes = merge(functionCallBytesPrefix);
+                                //encodeBigIntegerArrayToEtherFormat(inputs),
+                                //encodeBytesArrayToEtherFormat(vk),
+                                ///encodeBytesArrayToEtherFormat(proof));
                         logger.info("Do verification request!");
-                        receipt2 = sendTxAndWait(contractAddress, functionCallBytes);
+                        receipt4 = sendTxAndWait(contractAddress, functionCallBytes);
                         logger.info("Verification result received!");
 
-                        byte[] ret = receipt2.getExecutionResult();
+                        byte[] ret = receipt4.getExecutionResult();
 
                         System.out.println(bytesToBigInteger(ret).toString());
                         break;
@@ -249,6 +424,55 @@ public class SnarkVerifyBinaryOnesNumber {
                     }
                 }
             } // end of sending proof and confirm verification
+
+            TransactionReceipt receipt5 = null;
+            if (receipt4 != null) {
+                failureCnt = 0;
+                while (failureCnt < 10) {
+                    try {
+                        logger.info("The " + (failureCnt + 1) + " trail to get address by calling 'get_address'");
+                        CallTransaction.Function get_address = contract.getByName("get_address");
+                        byte[] functionCallBytes = get_address.encode();
+                        logger.info("Do request address!");
+                        receipt5 = sendTxAndWait(contractAddress, functionCallBytes);
+                        logger.info("Address result received!");
+                        byte[] ret = receipt5.getExecutionResult();
+                        System.out.println(bytesToBigInteger(ret).toString(16));
+                        break;
+                    } catch (RuntimeException e) {
+                        failureCnt++;
+                        logger.info("Verifying Request NOT packed!");
+                        continue;
+                    }
+                }
+            } // end of sending proof and confirm verification
+
+//            System.out.println("Proof_Maj_11:");
+//            ProgramResult r1 = ethereum.callConstantFunction(Hex.toHexString(contractAddress), contract.getByName("get_proof"));
+//            Object[] ret1 = contract.getByName("get_proof").decodeResult(r1.getHReturn());
+//            Object[] rt1 = (Object[]) ret1[0];
+//            for(int i = 0; i < rt1.length; i++){
+//                BigInteger rt1_i = (BigInteger) rt1[i];
+//                System.out.println(rt1_i);
+//            }
+//
+//            System.out.println("VK:");
+//            ProgramResult r2 = ethereum.callConstantFunction(Hex.toHexString(contractAddress), contract.getByName("get_vk"));
+//            Object[] ret2 = contract.getByName("get_vk").decodeResult(r2.getHReturn());
+//            Object[] rt2 = (Object[]) ret2[0];
+//            for(int i = 0; i < rt1.length; i++){
+//                BigInteger rt2_i = (BigInteger) rt2[i];
+//                System.out.println(rt2_i);
+//            }
+
+//            System.out.println("Inputs:");
+//            ProgramResult r3 = ethereum.callConstantFunction(Hex.toHexString(contractAddress), contract.getByName("get_inputs"));
+//            Object[] ret3 = contract.getByName("get_inputs").decodeResult(r2.getHReturn());
+//            Object[] rt3 = (Object[]) ret3[0];
+//            for(int i = 0; i < rt1.length; i++){
+//                BigInteger rt3_i = (BigInteger) rt3[i];
+//                System.out.println(rt3_i);
+//            }
 
         } // end of onSyncDone method
 
@@ -287,7 +511,7 @@ public class SnarkVerifyBinaryOnesNumber {
             }
         }
 
-        final int BLOCK_NUM_FOR_RESEND = 6;
+        final int BLOCK_NUM_FOR_RESEND = 4;
         private TransactionReceipt waitForTx(byte[] txHash) throws RuntimeException, InterruptedException {
             ByteArrayWrapper txHashW = new ByteArrayWrapper(txHash);
             txWaiters.put(txHashW, null);
