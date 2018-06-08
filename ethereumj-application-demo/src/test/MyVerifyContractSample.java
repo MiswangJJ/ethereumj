@@ -1,3 +1,5 @@
+package test;
+
 import org.ethereum.core.Block;
 import org.ethereum.core.CallTransaction;
 import org.ethereum.core.Transaction;
@@ -9,6 +11,7 @@ import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.solidity.compiler.CompilationResult;
 import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.util.ByteUtil;
+import org.ethereum.vm.program.ProgramResult;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -19,23 +22,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.ethereum.crypto.HashUtil.sha3;
 import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
 
 
 /**
  * Created by Anton Nashatyrev on 03.03.2016.
  */
-public class MyHashContractSample extends MyTestNetSample {
+public class MyVerifyContractSample extends MyTestNetSample {
 
     @Autowired
     SolidityCompiler compiler;
 
     String contract =
             "pragma solidity ^0.4.0; \n"+
-                    "contract HashSample { \n" +
-                    "  function cal_sha3(int256 a) returns (bytes32) {" +
-                    "    return sha3(a);" +
+                    "contract VerifySample { \n" +
+                    "  uint a;" +
+                    "  uint b;" +
+                    "  uint c;" +
+                    "  function set_val(uint _a,uint _b,uint _c) {" +
+                    "    a = _a;" +
+                    "    b = _b;" +
+                    "    c = _c;" +
+                    "  }\n" +
+                    "  function call_mulmod() constant returns (uint) {" +
+                    "    return mulmod(a, b, c);" +
                     "  }\n" +
                     "}";
 
@@ -49,9 +59,10 @@ public class MyHashContractSample extends MyTestNetSample {
             // when block arrives look for our included transactions
             @Override
             public void onBlock(Block block, List<TransactionReceipt> receipts) {
-                MyHashContractSample.this.onBlock(block, receipts);
+                MyVerifyContractSample.this.onBlock(block, receipts);
             }
         });
+
 
         logger.info("Compiling contract...");
         SolidityCompiler.Result result = compiler.compileSrc(contract.getBytes(), true, true,
@@ -68,26 +79,33 @@ public class MyHashContractSample extends MyTestNetSample {
             throw new RuntimeException("Compilation failed, no binary returned:\n" + result.errors);
         }
 
-        logger.info("Sending contract to net and waiting for inclusion");
+
+        logger.info("Sending contract to net...");
         TransactionReceipt receipt = sendTxAndWait(new byte[0], Hex.decode(metadata.bin));
         logger.info("Contract included!");
 
 
         byte[] contractAddress = receipt.getTransaction().getContractAddress();
-        logger.info("Contract created: " + Hex.toHexString(contractAddress));
+        logger.info("Contract address: " + Hex.toHexString(contractAddress));
         logger.info("Contract code: " + Hex.toHexString(Hex.decode(metadata.bin)));
         logger.info("Contract ABI: " + metadata.abi.toString());
-        logger.info("Verify contract address: " + ethereum.getRepository().isExist(contractAddress));
+        //logger.info("Verify contract address: " + ethereum.getRepository().isExist(contractAddress));
 
         CallTransaction.Contract contract = new CallTransaction.Contract(metadata.abi);
 
+        logger.info("Calling the contract function 'set'");
+        CallTransaction.Function set = contract.getByName("set_val");
+        byte[] functionCallBytes = set.encode(new BigInteger("11"),new BigInteger("3"),new BigInteger("17"));
+        TransactionReceipt receipt1 = sendTxAndWait(contractAddress, functionCallBytes);
+        logger.info("Contract modified!");
 
-        logger.info("Calling the calculate hash 'cal_sha3'");
-        CallTransaction.Function cal_sha3 = contract.getByName("cal_sha3");
-        byte[] functionCallBytes4 = cal_sha3.encode(new BigInteger("777777"));
-        TransactionReceipt receipt4 = sendTxAndWait(contractAddress, functionCallBytes4);
-        byte[] ret6 = receipt4.getExecutionResult();
-        System.out.println(new BigInteger(ret6).toString(16));
+
+        logger.info("Calling the contract function 'call_mulmod'");
+        ProgramResult r1 = ethereum.callConstantFunction(Hex.toHexString(contractAddress),
+                contract.getByName("call_mulmod"));
+        Object[] ret1 = contract.getByName("call_mulmod").decodeResult(r1.getHReturn());
+        logger.info("Current contract value i: " + ret1[0]);
+
 
     }
 
@@ -155,7 +173,7 @@ public class MyHashContractSample extends MyTestNetSample {
             @Override
             @Bean
             public MyTestNetSample sampleBean() {
-                return new MyHashContractSample();
+                return new MyVerifyContractSample();
             }
         }
 

@@ -1,3 +1,5 @@
+package test;
+
 import com.typesafe.config.ConfigFactory;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;

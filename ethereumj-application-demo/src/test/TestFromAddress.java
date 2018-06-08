@@ -1,3 +1,5 @@
+package test;
+
 import org.ethereum.crypto.ECKey;
 import org.spongycastle.util.encoders.Hex;
 

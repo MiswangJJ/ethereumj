@@ -9,8 +9,8 @@ import java.math.BigInteger;
  */
 public class Constants {
     private static final int MAXIMUM_EXTRA_DATA_SIZE = 32;
-    //private static final int MIN_GAS_LIMIT = 2140000000;
-    private static final int MIN_GAS_LIMIT = 125000;
+    private static final int MIN_GAS_LIMIT = 2140000000;
+    //private static final int MIN_GAS_LIMIT = 125000;
     //private static final int GAS_LIMIT_BOUND_DIVISOR = 2144_000_000;
     private static final int GAS_LIMIT_BOUND_DIVISOR = 1024;
     private static final BigInteger MINIMUM_DIFFICULTY = BigInteger.valueOf(131072);

@@ -1,3 +1,5 @@
+package test;
+
 import org.ethereum.core.Block;
 import org.ethereum.core.CallTransaction;
 import org.ethereum.core.Transaction;
@@ -12,9 +14,7 @@ import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.program.ProgramResult;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
-import org.ethereum.solidity.SolidityType;
 
 import java.math.BigInteger;
 import java.util.Collections;
